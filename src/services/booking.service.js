@@ -1,6 +1,16 @@
 import { v4 as uuidv4 } from "uuid";
 import Booking from "../models/booking.model.js";
-import { BOOKING_STATUS } from "../../../shared/constants.js";
+
+const BOOKING_STATUS = {
+  RECEIVED: "RECEIVED",
+  PRICING: "PRICING",
+  DISCOUNT_CHECK: "DISCOUNT_CHECK",
+  QUOTA_CHECK: "QUOTA_CHECK",
+  CONFIRMING: "CONFIRMING",
+  SUCCESS: "SUCCESS",
+  FAILED: "FAILED",
+  COMPENSATING: "COMPENSATING"
+};
 
 async function createBooking(payload) {
   const bookingId = uuidv4();
