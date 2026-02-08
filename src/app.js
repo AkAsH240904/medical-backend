@@ -16,12 +16,27 @@ app.use("/", bookingRoutes);
 
 const PORT = process.env.PORT || 8080;
 
-connectDB()
-  .then(() => {
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error("DB connection failed:", err);
+// connectDB()
+//   .then(() => {
+//     app.listen(PORT, "0.0.0.0", () => {
+//       console.log(`Server running on port ${PORT}`);
+//     });
+//   })
+//   .catch((err) => {
+//     console.error("DB connection failed:", err);
+//   });
+
+async function startServer() {
+  try {
+    await connectDB();
+    console.log("DB connected");
+  } catch (err) {
+    console.error("DB failed:", err);
+  }
+
+  app.listen(process.env.PORT || 8080, () => {
+    console.log("Server running");
   });
+}
+
+startServer();
