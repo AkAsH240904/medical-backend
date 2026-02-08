@@ -28,7 +28,7 @@ const PORT = process.env.PORT || 8080;
 
 async function startServer() {
   try {
-    await connectDB();
+    //await connectDB();
     console.log("DB connected");
   } catch (err) {
     console.error("DB failed:", err);
