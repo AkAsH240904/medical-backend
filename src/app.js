@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import cors from "cors";
 import connectDB from "./config/db.js";
@@ -28,7 +31,7 @@ const PORT = process.env.PORT || 8080;
 
 async function startServer() {
   try {
-    //await connectDB();
+    await connectDB();
     console.log("DB connected");
   } catch (err) {
     console.error("DB failed:", err);
