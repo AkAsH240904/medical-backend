@@ -12,12 +12,12 @@ import {
 const router = express.Router();
 
 router.post("/booking", createBookingHandler);
-router.get("/booking/:bookingId/status", getStatus);
-router.post("/pricing", pricingHandler);
-router.post("/discount", discountHandler);
-router.post("/quota", quotaHandler);
-router.post("/confirm", confirmHandler);
-router.post("/compensate", compensateHandler);
+router.get("/booking/status/:bookingId", getStatus);
 
+router.post("/booking/pricing", pricingHandler);
+router.post("/booking/discount", discountHandler);
+router.post("/booking/quota", quotaHandler);
+router.post("/booking/confirm", confirmHandler);
+router.post("/booking/compensate", compensateHandler);
 
 export default router;
