@@ -23,10 +23,10 @@ export async function createBooking(payload) {
     status: BOOKING_STATUS.RECEIVED,
     message: "Booking request received"
   });
-  await pricingService(bookingId);
-await discountService(bookingId);
-await quotaService(bookingId);
-await confirmService(bookingId);
+  pricingService(bookingId);
+  discountService(bookingId);
+  quotaService(bookingId);
+  confirmService(bookingId);
   await triggerWorkflow(bookingId);
   return bookingId;
 }
