@@ -17,26 +17,18 @@ const BOOKING_STATUS = {
 export async function createBooking(payload) {
   const bookingId = uuidv4();
 
-  Booking.create({
+  await Booking.create({
     bookingId,
     ...payload,
     status: BOOKING_STATUS.RECEIVED,
     message: "Booking request received"
   });
 
-  // runSaga(bookingId).catch((err) => {
-  //   console.error("Saga crashed globally:", err);
-  // });
-  setTimeout(async () => {
-  await Booking.updateOne(
-    { bookingId },
-    { status: "PRICING", message: "Calculating base price..." }
-  );
-}, 3000);
-
   await triggerWorkflow(bookingId);
+
   return bookingId;
 }
+
 // async function runSaga(bookingId) {
 //   try {
 //     console.log("SAGA START:", bookingId);
@@ -128,18 +120,19 @@ async function compensate(bookingId, reason) {
   console.log("COMPENSATION COMPLETED");
 }
 
-async function update(id, status, message) {
-  if (!status) {
-    throw new Error("Invalid booking status");
-  }
+// async function update(id, status, message) {
+//   if (!status) {
+//     throw new Error("Invalid booking status");
+//   }
 
-  await Booking.updateOne(
-    { bookingId: id },
-    {
-      $set: { status, message }
-    }
-  );
-}
+//   setTimeout(async () => {
+//   await Booking.updateOne(
+//     { bookingId },
+//     { status: "PRICING", message: "Calculating base price..." }
+//   );
+// }, 3000);
+// ;
+// }
 
 export async function pricingService(bookingId) {
   const booking = await Booking.findOne({ bookingId });

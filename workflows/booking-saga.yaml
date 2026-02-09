@@ -10,6 +10,7 @@ main:
                   url: https://medical-booking-system-1072885061741.asia-south2.run.app/pricing
                   body:
                     bookingId: ${bookingId}
+                result: pricingResult
 
             - discount:
                 call: http.post
@@ -17,6 +18,7 @@ main:
                   url: https://medical-booking-system-1072885061741.asia-south2.run.app/discount
                   body:
                     bookingId: ${bookingId}
+                result: discountResult
 
             - quota:
                 call: http.post
@@ -24,6 +26,7 @@ main:
                   url: https://medical-booking-system-1072885061741.asia-south2.run.app/quota
                   body:
                     bookingId: ${bookingId}
+                result: quotaResult
 
             - confirm:
                 call: http.post
@@ -31,6 +34,9 @@ main:
                   url: https://medical-booking-system-1072885061741.asia-south2.run.app/confirm
                   body:
                     bookingId: ${bookingId}
+
+            - success:
+                return: "BOOKING_CONFIRMED"
 
         except:
           as: error
@@ -42,3 +48,6 @@ main:
                   body:
                     bookingId: ${bookingId}
                     reason: ${error.message}
+
+            - failed:
+                return: "BOOKING_FAILED"
