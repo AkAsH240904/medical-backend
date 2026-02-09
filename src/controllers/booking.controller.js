@@ -34,27 +34,57 @@ export async function getStatus(req, res) {
 }
 
 export async function pricingHandler(req, res) {
-  await pricingService(req.body.bookingId);
-  res.json({ ok: true });
+  try {
+    if (!req.body.bookingId) {
+      return res.status(400).json({ error: "bookingId required" });
+    }
+    await pricingService(req.body.bookingId);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Pricing error:", err);
+    res.status(500).json({ error: err.message });
+  }
 }
 
 export async function discountHandler(req, res) {
-  await discountService(req.body.bookingId);
-  res.json({ ok: true });
+  try {
+    await discountService(req.body.bookingId);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Discount error:", err);
+    res.status(500).json({ error: err.message });
+  }
 }
 
 export async function quotaHandler(req, res) {
-  await quotaService(req.body.bookingId);
-  res.json({ ok: true });
+  try {
+    await quotaService(req.body.bookingId);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Quota error:", err);
+    res.status(500).json({ error: err.message });
+  }
 }
 
 export async function confirmHandler(req, res) {
-  await confirmService(req.body.bookingId);
-  res.json({ ok: true });
+  try {
+    await confirmService(req.body.bookingId);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Confirm error:", err);
+    res.status(500).json({ error: err.message });
+  }
 }
 
+
 export async function compensateHandler(req, res) {
-  await compensateService(req.body.bookingId, req.body.reason);
-  res.json({ ok: true });
+  try {
+    await compensateService(req.body.bookingId, req.body.reason);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Compensation error:", err);
+    res.json({ ok: false, error: err.message });
+  }
 }
+
 
