@@ -12,7 +12,7 @@ import {
 const router = express.Router();
 
 router.post("/booking", createBookingHandler);
-router.get("/booking/status/:bookingId", getStatus);
+router.get("/booking/:bookingId/status", getStatus);
 
 router.post("/booking/pricing", pricingHandler);
 router.post("/booking/discount", discountHandler);
