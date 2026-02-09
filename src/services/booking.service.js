@@ -29,21 +29,11 @@ export async function createBooking(payload) {
 }
 
 export async function pricingService(bookingId) {
-  const booking = await Booking.findOne({ bookingId });
+  const booking = await Booking.findOne({ bookingId }).lean();
   if (!booking) throw new Error("Booking not found");
 
-  await Booking.updateOne(
-    { bookingId },
-    {
-      $set: {
-        status: BOOKING_STATUS.PRICING,
-        message: "Calculating base price..."
-      }
-    }
-  );
-
-  const basePrice = booking.services.reduce(
-    (sum, s) => sum + Number(s.price),
+  const basePrice = (booking.services || []).reduce(
+    (sum, s) => sum + Number(s.price || 0),
     0
   );
 
@@ -51,6 +41,8 @@ export async function pricingService(bookingId) {
     { bookingId },
     {
       $set: {
+        status: BOOKING_STATUS.PRICING,
+        message: "Calculating base price...",
         basePrice,
         finalPrice: basePrice
       }
@@ -59,18 +51,8 @@ export async function pricingService(bookingId) {
 }
 
 export async function discountService(bookingId) {
-  const booking = await Booking.findOne({ bookingId });
+  const booking = await Booking.findOne({ bookingId }).lean();
   if (!booking) throw new Error("Booking not found");
-
-  await Booking.updateOne(
-    { bookingId },
-    {
-      $set: {
-        status: BOOKING_STATUS.DISCOUNT_CHECK,
-        message: "Checking discount eligibility..."
-      }
-    }
-  );
 
   const today = new Date();
   const dob = new Date(booking.dob);
@@ -83,32 +65,26 @@ export async function discountService(bookingId) {
     (booking.gender === "Female" && isBirthday) ||
     booking.basePrice > 1000;
 
-  if (eligible) {
-    await Booking.updateOne(
-      { bookingId },
-      {
-        $set: {
-          finalPrice: Math.round(booking.basePrice * 0.88),
-          message: "Discount applied"
-        }
+  const finalPrice = eligible
+    ? Math.round(booking.basePrice * 0.88)
+    : booking.basePrice;
+
+  await Booking.updateOne(
+    { bookingId },
+    {
+      $set: {
+        status: BOOKING_STATUS.DISCOUNT_CHECK,
+        finalPrice,
+        message: eligible ? "Discount applied" : "No discount applicable"
       }
-    );
-  } else {
-    await Booking.updateOne(
-      { bookingId },
-      {
-        $set: {
-          message: "No discount applicable"
-        }
-      }
-    );
-  }
+    }
+  );
 }
 
 const DAILY_LIMIT = 2;
 
 export async function quotaService(bookingId) {
-  const booking = await Booking.findOne({ bookingId });
+  const booking = await Booking.findOne({ bookingId }).lean();
   if (!booking) throw new Error("Booking not found");
 
   await Booking.updateOne(
@@ -136,16 +112,11 @@ export async function quotaService(bookingId) {
 
   await Quota.updateOne(
     { date: today },
-    {
-      $inc: { used: 1 }
-    }
+    { $inc: { used: 1 } }
   );
 }
 
 export async function confirmService(bookingId) {
-  const booking = await Booking.findOne({ bookingId });
-  if (!booking) throw new Error("Booking not found");
-
   await Booking.updateOne(
     { bookingId },
     {
@@ -160,18 +131,15 @@ export async function confirmService(bookingId) {
     { bookingId },
     {
       $set: {
-        referenceId: "BOOK-" + bookingId.slice(0, 8),
         status: BOOKING_STATUS.SUCCESS,
-        message: "Booking confirmed successfully"
+        message: "Booking confirmed successfully",
+        referenceId: "BOOK-" + bookingId.slice(0, 8)
       }
     }
   );
 }
 
 export async function compensateService(bookingId, reason) {
-  const booking = await Booking.findOne({ bookingId });
-  if (!booking) return;
-
   await Booking.updateOne(
     { bookingId },
     {
