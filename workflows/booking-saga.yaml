@@ -6,6 +6,8 @@ main:
           call: http.post
           args:
             url: https://medical-booking-system-1072885061741.asia-south2.run.app/booking/pricing
+            headers:
+              Content-Type: "application/json"
             body:
               bookingId: ${bookingId}
         except:
@@ -14,6 +16,8 @@ main:
                 call: http.post
                 args:
                   url: https://medical-booking-system-1072885061741.asia-south2.run.app/booking/compensate
+                  headers:
+                    Content-Type: "application/json"
                   body:
                     bookingId: ${bookingId}
                     reason: "pricing_failed"
@@ -25,6 +29,8 @@ main:
           call: http.post
           args:
             url: https://medical-booking-system-1072885061741.asia-south2.run.app/booking/discount
+            headers:
+              Content-Type: "application/json"
             body:
               bookingId: ${bookingId}
         except:
@@ -33,6 +39,8 @@ main:
                 call: http.post
                 args:
                   url: https://medical-booking-system-1072885061741.asia-south2.run.app/booking/compensate
+                  headers:
+                    Content-Type: "application/json"
                   body:
                     bookingId: ${bookingId}
                     reason: "discount_failed"
@@ -44,6 +52,8 @@ main:
           call: http.post
           args:
             url: https://medical-booking-system-1072885061741.asia-south2.run.app/booking/quota
+            headers:
+              Content-Type: "application/json"
             body:
               bookingId: ${bookingId}
         except:
@@ -52,6 +62,8 @@ main:
                 call: http.post
                 args:
                   url: https://medical-booking-system-1072885061741.asia-south2.run.app/booking/compensate
+                  headers:
+                    Content-Type: "application/json"
                   body:
                     bookingId: ${bookingId}
                     reason: "quota_failed"
@@ -63,6 +75,8 @@ main:
           call: http.post
           args:
             url: https://medical-booking-system-1072885061741.asia-south2.run.app/booking/confirm
+            headers:
+              Content-Type: "application/json"
             body:
               bookingId: ${bookingId}
         except:
@@ -71,6 +85,8 @@ main:
                 call: http.post
                 args:
                   url: https://medical-booking-system-1072885061741.asia-south2.run.app/booking/compensate
+                  headers:
+                    Content-Type: "application/json"
                   body:
                     bookingId: ${bookingId}
                     reason: "confirm_failed"
