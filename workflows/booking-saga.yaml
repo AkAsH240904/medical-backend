@@ -1,53 +1,85 @@
 main:
   params: [bookingId]
   steps:
-    - saga:
+    - pricing:
         try:
-          steps:
-            - pricing:
-                call: http.post
-                args:
-                  url: https://medical-booking-system-1072885061741.asia-south2.run.app/pricing
-                  body:
-                    bookingId: ${bookingId}
-                result: pricingResult
-
-            - discount:
-                call: http.post
-                args:
-                  url: https://medical-booking-system-1072885061741.asia-south2.run.app/discount
-                  body:
-                    bookingId: ${bookingId}
-                result: discountResult
-
-            - quota:
-                call: http.post
-                args:
-                  url: https://medical-booking-system-1072885061741.asia-south2.run.app/quota
-                  body:
-                    bookingId: ${bookingId}
-                result: quotaResult
-
-            - confirm:
-                call: http.post
-                args:
-                  url: https://medical-booking-system-1072885061741.asia-south2.run.app/confirm
-                  body:
-                    bookingId: ${bookingId}
-
-            - success:
-                return: "BOOKING_CONFIRMED"
-
+          call: http.post
+          args:
+            url: https://medical-booking-system-1072885061741.asia-south2.run.app/pricing
+            body:
+              bookingId: ${bookingId}
         except:
           as: error
           steps:
-            - compensate:
+            - compensate_pricing:
                 call: http.post
                 args:
                   url: https://medical-booking-system-1072885061741.asia-south2.run.app/compensate
                   body:
                     bookingId: ${bookingId}
-                    reason: ${error.message}
-
-            - failed:
+                    reason: "pricing_failed"
+            - stop_pricing:
                 return: "BOOKING_FAILED"
+
+    - discount:
+        try:
+          call: http.post
+          args:
+            url: https://medical-booking-system-1072885061741.asia-south2.run.app/discount
+            body:
+              bookingId: ${bookingId}
+        except:
+          as: error
+          steps:
+            - compensate_discount:
+                call: http.post
+                args:
+                  url: https://medical-booking-system-1072885061741.asia-south2.run.app/compensate
+                  body:
+                    bookingId: ${bookingId}
+                    reason: "discount_failed"
+            - stop_discount:
+                return: "BOOKING_FAILED"
+
+    - quota:
+        try:
+          call: http.post
+          args:
+            url: https://medical-booking-system-1072885061741.asia-south2.run.app/quota
+            body:
+              bookingId: ${bookingId}
+        except:
+          as: error
+          steps:
+            - compensate_quota:
+                call: http.post
+                args:
+                  url: https://medical-booking-system-1072885061741.asia-south2.run.app/compensate
+                  body:
+                    bookingId: ${bookingId}
+                    reason: "quota_failed"
+            - stop_quota:
+                return: "BOOKING_FAILED"
+
+    - confirm:
+        try:
+          call: http.post
+          args:
+            url: https://medical-booking-system-1072885061741.asia-south2.run.app/confirm
+            body:
+              bookingId: ${bookingId}
+        except:
+          as: error
+          steps:
+            - compensate_confirm:
+                call: http.post
+                args:
+                  url: https://medical-booking-system-1072885061741.asia-south2.run.app/compensate
+                  body:
+                    bookingId: ${bookingId}
+                    reason: "confirm_failed"
+            - stop_confirm:
+                return: "BOOKING_FAILED"
+
+    - success:
+        return: "BOOKING_CONFIRMED"

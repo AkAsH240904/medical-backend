@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import Booking from "../models/booking.model.js";
-import { triggerWorkflow } from "./workflow.service.js";
 import Quota from "../models/quota.model.js";
+import { triggerWorkflow } from "./workflow.service.js";
 
 const BOOKING_STATUS = {
   RECEIVED: "RECEIVED",
@@ -25,114 +25,8 @@ export async function createBooking(payload) {
   });
 
   await triggerWorkflow(bookingId);
-
   return bookingId;
 }
-
-// async function runSaga(bookingId) {
-//   try {
-//     console.log("SAGA START:", bookingId);
-
-//     await update(
-//       bookingId,
-//       BOOKING_STATUS.PRICING,
-//       "Calculating base price..."
-//     );
-
-//     await delay();
-
-//     const booking = await Booking.findOne({ bookingId }).lean();
-
-// if (!booking) {
-//   throw new Error("Booking not found");
-// }
-
-// console.log("Services:", booking.services);
-
-// const basePrice = (booking.services || []).reduce(
-//   (sum, s) => sum + (Number(s?.price) || 0),
-//   0
-// );
-
-// console.log("Base price calculated:", basePrice);
-
-// await Booking.updateOne(
-//   { bookingId },
-//   { $set: { basePrice } }
-// );
-
-
-//     console.log("Base price saved");
-
-//     await update(
-//       bookingId,
-//       BOOKING_STATUS.CONFIRMING,
-//       "Confirming booking..."
-//     );
-
-//     await delay();
-
-//     await Booking.updateOne(
-//       { bookingId },
-//       {
-//         $set: {
-//           status: BOOKING_STATUS.SUCCESS,
-//           message: "Booking confirmed",
-//           finalPrice: basePrice,
-//           referenceId: "BOOK-" + bookingId.slice(0, 8)
-//         }
-//       }
-//     );
-
-//     console.log("SAGA COMPLETED SUCCESSFULLY");
-
-//   } catch (err) {
-//     console.error("Saga error:", err);
-//     await compensate(bookingId, err.message);
-//   }
-// }
-
-async function compensate(bookingId, reason) {
-  console.log("COMPENSATION STARTED");
-
-  await Booking.updateOne(
-    { bookingId },
-    {
-      $set: {
-        status: BOOKING_STATUS.COMPENSATING,
-        message: "Rolling back booking..."
-      }
-    }
-  );
-
-  await delay();
-
-  await Booking.updateOne(
-    { bookingId },
-    {
-      $set: {
-        status: BOOKING_STATUS.FAILED,
-        message: reason || "Booking failed"
-      }
-    }
-  );
-
-  console.log("COMPENSATION COMPLETED");
-}
-
-// async function update(id, status, message) {
-//   if (!status) {
-//     throw new Error("Invalid booking status");
-//   }
-
-//   setTimeout(async () => {
-//   await Booking.updateOne(
-//     { bookingId },
-//     { status: "PRICING", message: "Calculating base price..." }
-//   );
-// }, 3000);
-// ;
-// }
 
 export async function pricingService(bookingId) {
   const booking = await Booking.findOne({ bookingId });
@@ -143,7 +37,7 @@ export async function pricingService(bookingId) {
   await booking.save();
 
   const basePrice = booking.services.reduce(
-    (sum, s) => sum + s.price,
+    (sum, s) => sum + Number(s.price),
     0
   );
 
@@ -181,7 +75,7 @@ export async function discountService(bookingId) {
   await booking.save();
 }
 
-const DAILY_LIMIT = 2; // K
+const DAILY_LIMIT = 2;
 
 export async function quotaService(bookingId) {
   const booking = await Booking.findOne({ bookingId });
@@ -191,13 +85,11 @@ export async function quotaService(bookingId) {
   booking.message = "Checking discount quota...";
   await booking.save();
 
-  if (booking.finalPrice === booking.basePrice) {
-    return; // no discount → skip quota
-  }
+  if (booking.finalPrice === booking.basePrice) return;
 
   const today = new Date().toISOString().split("T")[0];
-
   let quota = await Quota.findOne({ date: today });
+
   if (!quota) {
     quota = await Quota.create({ date: today, used: 0 });
   }
@@ -218,7 +110,7 @@ export async function confirmService(bookingId) {
   booking.message = "Confirming booking...";
   await booking.save();
 
-  booking.referenceId = uuidv4();
+  booking.referenceId = "BOOK-" + bookingId.slice(0, 8);
   booking.status = BOOKING_STATUS.SUCCESS;
   booking.message = "Booking confirmed successfully";
   await booking.save();
@@ -236,9 +128,3 @@ export async function compensateService(bookingId, reason) {
   booking.message = reason || "Booking failed";
   await booking.save();
 }
-
-
-// function delay(ms = 1500) {
-//   return new Promise((res) => setTimeout(res, ms));
-// }
-
