@@ -1,0 +1,44 @@
+main:
+  params: [bookingId]
+  steps:
+    - saga:
+        try:
+          steps:
+            - pricing:
+                call: http.post
+                args:
+                  url: https://medical-booking-system-1072885061741.asia-south2.run.app/pricing
+                  body:
+                    bookingId: ${bookingId}
+
+            - discount:
+                call: http.post
+                args:
+                  url: https://medical-booking-system-1072885061741.asia-south2.run.app/discount
+                  body:
+                    bookingId: ${bookingId}
+
+            - quota:
+                call: http.post
+                args:
+                  url: https://medical-booking-system-1072885061741.asia-south2.run.app/quota
+                  body:
+                    bookingId: ${bookingId}
+
+            - confirm:
+                call: http.post
+                args:
+                  url: https://medical-booking-system-1072885061741.asia-south2.run.app/confirm
+                  body:
+                    bookingId: ${bookingId}
+
+        except:
+          as: error
+          steps:
+            - compensate:
+                call: http.post
+                args:
+                  url: https://medical-booking-system-1072885061741.asia-south2.run.app/compensate
+                  body:
+                    bookingId: ${bookingId}
+                    reason: ${error.message}
