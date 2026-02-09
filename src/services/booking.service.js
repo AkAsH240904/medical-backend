@@ -32,27 +32,45 @@ export async function pricingService(bookingId) {
   const booking = await Booking.findOne({ bookingId });
   if (!booking) throw new Error("Booking not found");
 
-  booking.status = BOOKING_STATUS.PRICING;
-  booking.message = "Calculating base price...";
-  await booking.save();
+  await Booking.updateOne(
+    { bookingId },
+    {
+      $set: {
+        status: BOOKING_STATUS.PRICING,
+        message: "Calculating base price..."
+      }
+    }
+  );
 
   const basePrice = booking.services.reduce(
     (sum, s) => sum + Number(s.price),
     0
   );
 
-  booking.basePrice = basePrice;
-  booking.finalPrice = basePrice;
-  await booking.save();
+  await Booking.updateOne(
+    { bookingId },
+    {
+      $set: {
+        basePrice,
+        finalPrice: basePrice
+      }
+    }
+  );
 }
 
 export async function discountService(bookingId) {
   const booking = await Booking.findOne({ bookingId });
   if (!booking) throw new Error("Booking not found");
 
-  booking.status = BOOKING_STATUS.DISCOUNT_CHECK;
-  booking.message = "Checking discount eligibility...";
-  await booking.save();
+  await Booking.updateOne(
+    { bookingId },
+    {
+      $set: {
+        status: BOOKING_STATUS.DISCOUNT_CHECK,
+        message: "Checking discount eligibility..."
+      }
+    }
+  );
 
   const today = new Date();
   const dob = new Date(booking.dob);
@@ -66,13 +84,25 @@ export async function discountService(bookingId) {
     booking.basePrice > 1000;
 
   if (eligible) {
-    booking.finalPrice = Math.round(booking.basePrice * 0.88);
-    booking.message = "Discount applied";
+    await Booking.updateOne(
+      { bookingId },
+      {
+        $set: {
+          finalPrice: Math.round(booking.basePrice * 0.88),
+          message: "Discount applied"
+        }
+      }
+    );
   } else {
-    booking.message = "No discount applicable";
+    await Booking.updateOne(
+      { bookingId },
+      {
+        $set: {
+          message: "No discount applicable"
+        }
+      }
+    );
   }
-
-  await booking.save();
 }
 
 const DAILY_LIMIT = 2;
@@ -81,9 +111,15 @@ export async function quotaService(bookingId) {
   const booking = await Booking.findOne({ bookingId });
   if (!booking) throw new Error("Booking not found");
 
-  booking.status = BOOKING_STATUS.QUOTA_CHECK;
-  booking.message = "Checking discount quota...";
-  await booking.save();
+  await Booking.updateOne(
+    { bookingId },
+    {
+      $set: {
+        status: BOOKING_STATUS.QUOTA_CHECK,
+        message: "Checking discount quota..."
+      }
+    }
+  );
 
   if (booking.finalPrice === booking.basePrice) return;
 
@@ -98,33 +134,61 @@ export async function quotaService(bookingId) {
     throw new Error("Daily discount quota exceeded");
   }
 
-  quota.used += 1;
-  await quota.save();
+  await Quota.updateOne(
+    { date: today },
+    {
+      $inc: { used: 1 }
+    }
+  );
 }
 
 export async function confirmService(bookingId) {
   const booking = await Booking.findOne({ bookingId });
   if (!booking) throw new Error("Booking not found");
 
-  booking.status = BOOKING_STATUS.CONFIRMING;
-  booking.message = "Confirming booking...";
-  await booking.save();
+  await Booking.updateOne(
+    { bookingId },
+    {
+      $set: {
+        status: BOOKING_STATUS.CONFIRMING,
+        message: "Confirming booking..."
+      }
+    }
+  );
 
-  booking.referenceId = "BOOK-" + bookingId.slice(0, 8);
-  booking.status = BOOKING_STATUS.SUCCESS;
-  booking.message = "Booking confirmed successfully";
-  await booking.save();
+  await Booking.updateOne(
+    { bookingId },
+    {
+      $set: {
+        referenceId: "BOOK-" + bookingId.slice(0, 8),
+        status: BOOKING_STATUS.SUCCESS,
+        message: "Booking confirmed successfully"
+      }
+    }
+  );
 }
 
 export async function compensateService(bookingId, reason) {
   const booking = await Booking.findOne({ bookingId });
   if (!booking) return;
 
-  booking.status = BOOKING_STATUS.COMPENSATING;
-  booking.message = "Rolling back booking...";
-  await booking.save();
+  await Booking.updateOne(
+    { bookingId },
+    {
+      $set: {
+        status: BOOKING_STATUS.COMPENSATING,
+        message: "Rolling back booking..."
+      }
+    }
+  );
 
-  booking.status = BOOKING_STATUS.FAILED;
-  booking.message = reason || "Booking failed";
-  await booking.save();
+  await Booking.updateOne(
+    { bookingId },
+    {
+      $set: {
+        status: BOOKING_STATUS.FAILED,
+        message: reason || "Booking failed"
+      }
+    }
+  );
 }
